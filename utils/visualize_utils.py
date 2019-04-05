@@ -1,7 +1,7 @@
 import torch
 import os.path
 from utils.image_utils import crop_image
-from utils.train_utils import load_globals, init_loaders, init_folders, init_nets
+from utils.train_utils import load_globals, init_folders, init_nets
 from loaders.motif_dataset import MotifDS
 from PIL import Image
 import numpy as np
@@ -9,27 +9,16 @@ import numpy as np
 
 # network names
 root_path = '..'
-# train_tag = 'btl_mega_all'
-# train_tag = 'btl_mega_blur_all'
-train_tag = 'btl_final3_all'
-# train_tag = 'btl_trans_texts_shapes_all'
-# globals
+train_tag = 'vm_demo_text_remover'
+load_tag = ''
+
 device = torch.device('cuda:2')
-
 net_path = '%s/checkpoints/%s' % (root_path, train_tag)
-# net_path = '/mnt/data/amir/water/checkpoints/%s' % train_tag
-
-resources_root = '%s/data/test_images/trialswm' % root_path
-# resources_root = '%s/data/to_jpg/white_texts' % root_path
-target_root = resources_root
-
-tag = ''
-# resources_root = '/mnt/data/amir/water/cache/emojis_pert_op_all/colF'
-# target_root = '/mnt/data/amir/water/cache/emojis_pert_op_all/eval_sanity'
+resources_root = '/home/amir/temp_bridge/data/test_images/trialswm'
+target_root = '%s/data/tmp' % root_path
 
 
-
-def load_image(image_path, include_tensor=False):
+def load_image(image_path, _device, include_tensor=False):
     numpy_image = None
     tensor_image = None
     if os.path.isfile(image_path):
@@ -53,7 +42,7 @@ def load_image(image_path, include_tensor=False):
             numpy_image = numpy_image[:, :, :3]
         if include_tensor:
             tensor_image = MotifDS.trans(MotifDS.flip(numpy_image)[0])[0]
-            tensor_image = torch.unsqueeze(torch.from_numpy(tensor_image), 0).to(device)
+            tensor_image = torch.unsqueeze(torch.from_numpy(tensor_image), 0).to(_device)
         numpy_image = np.expand_dims(numpy_image / 255, 0)
     return numpy_image, tensor_image
 
@@ -68,9 +57,9 @@ def transform_to_numpy_image(tensor_image):
     return image
 
 
-def collect_synthesized():
+def collect_synthesized(_source):
     paths = []
-    for root, _, files in os.walk(resources_root):
+    for root, _, files in os.walk(_source):
             for file in files:
                 file_name, file_extension = os.path.splitext(file)
                 if (file_extension == '.png' or file_extension == '.jpg' or file_extension == '.jpeg') and \
@@ -79,45 +68,43 @@ def collect_synthesized():
     return paths
 
 
-def save_numpy_image(images, suffix, prefix='', start_count=0):
+def save_numpy_image(images, suffix, _target_root, _resources_root, prefix='', start_count=0):
     images = (images * 255).astype(np.uint8)  # unnormalize
     for image_index in range(images.shape[0]):
         if prefix == '':
-            image_path = '%s/%d_%s.png' % (resources_root, image_index + start_count, suffix)
+            image_path = '%s/%d_%s.png' % (_resources_root, image_index + start_count, suffix)
         else:
-            image_path = '%s/%s_%s.png' % (target_root, prefix, suffix)
+            image_path = '%s/%s_%s.png' % (_target_root, prefix, suffix)
         image = Image.fromarray(images[image_index])
         image.save(image_path)
 
 
-def run_net(opt):
-    net = init_nets(opt, net_path, device, tag).eval()
-    synthesized_paths = collect_synthesized()
-
-    image_suffixes = ['reconstructed_image', 'reconstructed_mask']
+def run_net(opt, _device, _net_path, _source, _target, _train_tag, _tag=''):
+    net = init_nets(opt, _net_path, _device, _tag).eval()
+    synthesized_paths = collect_synthesized(_source)
+    image_suffixes = ['reconstructed_image', 'reconstructed_mask', 'reconstructed_motif']
     for path in synthesized_paths:
         prefix, _ = os.path.splitext(os.path.split(path)[-1])
         prefix = prefix.split('_')[0]
-        sy_np, sy_ts = load_image(path, True)
-        real_mask, _ = load_image('%s/%s_real_mask.png' % (resources_root, prefix))
-        real_box, _ = load_image('%s/%s_real_box.png' % (resources_root, prefix))
+        sy_np, sy_ts = load_image(path, _device, True)
         results = list(net(sy_ts))
         for idx, result in enumerate(results):
             results[idx] = transform_to_numpy_image(result)
         reconstructed_mask = results[1]
-        reconstructed_watermark = None
+        reconstructed_motif = None
         if len(results) == 3:
-            reconstructed_raw_watermark = results[2]
-            reconstructed_watermark = (reconstructed_raw_watermark - 1) * reconstructed_mask + 1
-
+            reconstructed_raw_motif = results[2]
+            reconstructed_motif = (reconstructed_raw_motif - 1) * reconstructed_mask + 1
         reconstructed_image = reconstructed_mask * results[0] + (1 - reconstructed_mask) * sy_np
-        for idx, image in enumerate([reconstructed_image, reconstructed_mask]):
+        for idx, image in enumerate([reconstructed_image, reconstructed_mask, reconstructed_motif]):
             if image is not None and idx < len(image_suffixes):
-                save_numpy_image(image, '%s_%s' % (image_suffixes[idx], train_tag), prefix=prefix)
+                save_numpy_image(image, '%s_%s' % (image_suffixes[idx], _train_tag), _target, _source,
+                                 prefix=prefix)
     print('done')
+
 
 
 if __name__ == '__main__':
     _opt = load_globals(net_path, {}, override=False)
     init_folders(target_root)
-    run_net(_opt)
+    run_net(_opt, device, net_path, resources_root, target_root, train_tag, load_tag)

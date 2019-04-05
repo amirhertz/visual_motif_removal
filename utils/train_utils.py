@@ -59,10 +59,9 @@ def init_loaders(opt, cache_root=''):
 
 
 def init_nets(opt, net_path, device, tag=''):
-    if opt.noise:
-        out_channels_mask = 3
-    else:
-        out_channels_mask = 1
+
+
+    out_channels_mask = 1
     net_baseline = UnetBaselineD(shared_depth=opt.shared_depth, use_vm_decoder=opt.use_vm_decoder, concat=opt.concat,
                                  blocks=opt.num_blocks, out_channels_mask=out_channels_mask, residual=opt.residual,
                                  transfer_data=opt.transfer_data)

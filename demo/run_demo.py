@@ -40,9 +40,8 @@ def run_demo():
     download_data()
     init_folders(RECONSTRUCTED_PATH)
     opt = load_globals(ROOT_PATH, {}, override=False)
-    run_net(opt, ROOT_PATH, DEVICE, TEST_PATH, RECONSTRUCTED_PATH, 'demo')
+    run_net(opt, DEVICE, ROOT_PATH, TEST_PATH, RECONSTRUCTED_PATH, 'demo')
     print("Reconstructed images are at %s/" % RECONSTRUCTED_PATH)
-
 
 if __name__ == '__main__':
     run_demo()
