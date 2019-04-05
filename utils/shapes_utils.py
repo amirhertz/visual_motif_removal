@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 
-def generate_shape_watermark(color):
+def generate_shape_motif(color):
     num_shapes = random.randint(1, 3)
     image = Image.new('RGBA', (300, 300), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
@@ -33,7 +33,7 @@ def get_color(color):
     return color
 
 
-def generate_line_watermark(color, image_size):
+def generate_line_motif(color, image_size):
     color = get_color(color)
     line_length = image_size / 8 + random.random() * image_size / 2
     theta = random.random() * 2 * np.pi

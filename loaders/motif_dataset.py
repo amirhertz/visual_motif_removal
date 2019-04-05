@@ -14,7 +14,7 @@ class MotifDS(Dataset):
     def __init__(self, images_root, motifs_root, train=True, bound_offset=5, image_size=128,
                  motif_size=(40, 50), rgb=True, weight=(0.4, 0.6), perturbate=False, opacity_var=0.,
                  scale_vm=False, rotate_vm=False, crop_vm=False, batch_vm=0, font='', border=0, split_tag='split',
-                 additive=False, blur=False):
+                 blur=False):
         super(MotifDS, self).__init__()
         self.__ds = ImageLoader(images_root)
         self.__size = image_size
@@ -26,30 +26,27 @@ class MotifDS(Dataset):
         self.__scale_vm, self.__rotate, self.__crop, self.__batch_vm, = scale_vm, rotate_vm, crop_vm, batch_vm
         self.__vms = motif_size
         self.__offset = bound_offset
-        self.__indices = self.__get_images_indices(images_root, train, os.path.basename(os.path.normpath(images_root)), split_tag)
+        self.__indices = self.__get_images_indices(images_root, train, os.path.basename(os.path.normpath(images_root)),
+                                                   split_tag)
         self.__vm_paths, self.__is_text = None, None
         self.__blur = blur
         self.__vm_paths, self.__is_text = self.__get_motif_paths(motifs_root, split_tag)
         self.__counter = 0
         self.fonts = self.__get_fonts_paths(font)
         self.border = border
-        self.additive = additive
 
     def __getitem__(self, index):
-        binary_mask, motif_rgb, opacity_field = self.__generate_motif()
-        or_image, sy_image = self.__generate_images(index, motif_rgb, opacity_field)
-        # if self.__blur and random.random() < 0.5:
-        #     sy_image = blur_image(sy_image, binary_mask)
+        binary_mask, motifs, opacity_field = self.__generate_motif()
+        or_image, sy_image = self.__generate_images(index, motifs, opacity_field)
         if self.__perturbate and random.random() < 0.5:
-            sy_image = permute_image(sy_image, binary_mask, multiplier=random.randint(1,2))
-        or_image, sy_image, binary_mask, motif_rgb = self.flip(or_image, sy_image, binary_mask, motif_rgb)
-        motif_rgb, or_image, sy_image = self.trans(motif_rgb, or_image, sy_image)
+            sy_image = permute_image(sy_image, binary_mask, multiplier=random.randint(1, 2))
+        or_image, sy_image, binary_mask, motifs = self.flip(or_image, sy_image, binary_mask, motifs)
+        motifs, or_image, sy_image = self.trans(motifs, or_image, sy_image)
         motif_area = np.sum(binary_mask)
         if motif_area == 0:
             motif_area += 1
-        motif_area = motif_area.astype(np.float32)
         return (torch.from_numpy(sy_image), torch.from_numpy(or_image), torch.from_numpy(binary_mask),
-                torch.from_numpy(motif_rgb))
+                torch.from_numpy(motifs))
 
     def __generate_motif(self):
         opacity_fields = []
@@ -60,13 +57,12 @@ class MotifDS(Dataset):
             vm_rows, vm_cols, motif, vm_indices = [], None, None, None
             while type(vm_rows) is int or len(vm_rows) == 0:
                 vm_size = self.__vms[0] + int(random.random() * (self.__vms[1] - self.__vms[0]))
-                # vm_size = int(min(self.__size / num_vm - 1, vm_size))
                 w = self.__w[0] + random.random() * (self.__w[1] - self.__w[0])
                 if self.__vm_paths == 'shapes':
                     if random.random() < .5:
                         motif = generate_shape_motif(self.__rgb)
                         motif = distort_vm(motif, vm_size, scale=self.__scale_vm, crop=self.__crop,
-                                               rotate=self.__rotate)
+                                           rotate=self.__rotate)
                     else:
                         motif = np.array(generate_line_motif(self.__rgb, self.__size))
 
@@ -79,16 +75,11 @@ class MotifDS(Dataset):
                         motif = self.__vm_paths[vm_index]
 
                     motif = distort_vm(motif, vm_size, scale=self.__scale_vm, crop=self.__crop,
-                                           rotate=self.__rotate, gray=self.__rgb == 'gray' and not self.__is_text)
+                                       rotate=self.__rotate, gray=self.__rgb == 'gray' and not self.__is_text)
                 if motif is not False:
                     vm_indices, vm_rows, vm_cols = get_image_indices(motif)
-                    # mean = random.randint(180, 255)
-                    # std = random.randint(0, 5)
-                    # new_color = np.clip(np.random.normal(mean, std, motif.shape), 0, 255)
-                    # motif[vm_indices[0], vm_indices[1], :3] = new_color[vm_indices[0], vm_indices[1], :3]
                     motif[vm_indices[0], vm_indices[1], :3] = 255
                     if vm_cols < self.__size:
-                        # offset_rows = random.randint(vm_idx * (self.__size // num_vm) , (vm_idx + 1) * (self.__size // num_vm)- vm_rows - 1)
                         offset_rows = random.randint(0, self.__size - vm_rows - 1)
                     else:
                         offset_rows = [0]
@@ -105,16 +96,12 @@ class MotifDS(Dataset):
             field[vm_rows, vm_cols, 0] = 1
             vm_rows, vm_cols, _ = np.nonzero(field)
             field[vm_rows, vm_cols, 0] = get_opacity_field(self.__size, w, self.__ov)[vm_rows, vm_cols]
-            if self.__blur and random.random() < .7:
-                # blurred = cv2.GaussianBlur(field, (3, 3), 0)
+            if self.__blur and random.random() < .5:
                 k_size = random.randint(1, 2)
                 blurred = cv2.blur(field, (1 + k_size * 2, 1 + k_size * 2))
                 field[vm_rows, vm_cols, 0] = blurred[vm_rows, vm_cols]
             binary_mask[vm_rows, vm_cols, 0] = 1
             opacity_fields.append(field)
-        # vm_rows, vm_cols, _ = np.nonzero(binary_mask)
-        # opacity_field = np.zeros([self.__size, self.__size, 1], dtype=np.float32)
-        # opacity_field[vm_rows, vm_cols, 0] = get_opacity_field(self.__size, w, self.__ov)[vm_rows, vm_cols]
         return binary_mask, motif_rgb, opacity_fields
 
     def __generate_text_motif(self, text):
@@ -141,15 +128,8 @@ class MotifDS(Dataset):
             sy_image = image
             for op in fields:
                 opacity = np.repeat(op, 3, axis=2)
-            # im_alpha = 0.2 + random.random() * 0.8
-            # mask = np.repeat(1 - mask * im_alpha, 3, axis=2)
-                if self.additive and random.random() < 0.5:
-                    # motif = motif.astype(int) * 2 - 255
-                    sy_image = np.clip(sy_image + (opacity / 2) * motif, 0, 255)
-                else:
-                    sy_image = (1 - opacity) * sy_image + opacity * motif
+                sy_image = (1 - opacity) * sy_image + opacity * motif
         return image, sy_image
-
 
     def __len__(self):
         return len(self.__indices)
@@ -282,60 +262,3 @@ class ImageLoader:
                     paths.append(os.path.join(root, file))
         paths = sorted(paths)
         return paths
-
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # TESTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-
-def text_motif_test():
-    im_root = '../data/coco/animal'
-    vm_root = '../data/text/word2.txt'
-    dataset = MotifDS(im_root, vm_root, train=True, image_size=256,
-                      motif_size=(160, 200), patch_size=128,
-                      weight=(0.3, 0.7), perturbate=False, opacity_var=.0,
-                      rgb=True, scale_vm=False, rotate_vm=False,
-                      crop_vm=False, batch_vm=0)
-    data_loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0)
-    for i, data in enumerate(data_loader):
-        synthesized, _, vm_mask, vm_rgb, _, _ = data
-        break
-
-
-def convert_before_show(image, repeat=False):
-    if repeat:
-        image = image * 255
-        image = np.repeat(image, 3, axis=0)
-    else:
-        image = (image + 1) * 127.5
-    image = np.transpose(image, (1, 2, 0)).astype(np.uint8)
-    show_image(image)
-
-
-def image_loader_test():
-    path = '../data/coco/animal'
-    image_loader = ImageLoader(path)
-    image_0 = image_loader[0]
-    show_image(image_0)
-
-
-def multi_loader_test():
-    perturbation = False
-    op_var = 0.0
-    im_root = '/mnt/data/students/student6/data/coco/person'
-    vm_root = '/mnt/data/students/student6/data/emojis'
-    dataset = MotifDS(im_root, vm_root, train=True, opacity_var=op_var,
-                      perturbate=perturbation)
-    data_loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0)
-    for i, data in enumerate(data_loader):
-        synthesized, _,_, vm_mask, vm_rgb, bounding, _ = data
-        print(i)
-
-
-if __name__ == '__main__':
-    from torch.utils.data import DataLoader
-    from utils.image_utils import show_image
-    # multi_loader_test()
-    text_motif_test()
-    print('finito')

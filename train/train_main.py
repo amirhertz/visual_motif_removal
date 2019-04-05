@@ -3,21 +3,15 @@ from torch import nn
 
 # paths
 root_path = '..'
-train_tag = 'vm_remover'
+train_tag = 'vm_demo_text_remover'
 
 
 # datasets paths
-cache_root = ['/mnt/data/amir/water/cache/btl_small_shapes_all',
-              '/mnt/data/amir/water/cache/btl_white_texts_border_all',
-              '/mnt/data/amir/water/cache/btl_white_texts_border+pert_all',
-              '/mnt/data/amir/water/cache/btl_white_blur_texts_all'
-               ]
+cache_root = ['/mnt/data/amir/water/cache/demo_text_vm_ds']
 
 # dataset configurations
 patch_size = 128
 image_size = 512
-image_and_vm_suffix = 'png'
-
 
 # network
 nets_path = '%s/checkpoints/%s' % (root_path, train_tag)
@@ -31,7 +25,7 @@ concat = True
 # train configurations
 gamma1 = 2   # L1 image
 gamma2 = 1   # L1 visual motif
-epochs = 200
+epochs = 100
 batch_size = 32
 print_frequency = 100
 save_frequency = 10
@@ -81,16 +75,15 @@ def train(net, train_loader, test_loader):
             losses.append(loss.item())
             # print
             if (i + 1) % print_frequency == 0:
-                print('[%d, %3d] %s, baseline loss: %.2f' % (real_epoch, batch_size * (i + 1), train_tag, sum(losses) / len(losses)))
+                print('%s [%d, %3d] , baseline loss: %.2f' % (train_tag, real_epoch, batch_size * (i + 1), sum(losses) / len(losses)))
                 losses = []
         # savings
         if real_epoch % save_frequency == 0:
             print("checkpointing...")
-            image_name = '%s/%s_%d.%s' % (images_path, train_tag, real_epoch, image_and_vm_suffix)
+            image_name = '%s/%s_%d.png' % (images_path, train_tag, real_epoch)
             _ = save_test_images(net, test_loader, image_name, device)
             torch.save(net.state_dict(), '%s/net_baseline.pth' % nets_path)
-            if real_epoch % (save_frequency * 2) == 0:
-                torch.save(net.state_dict(), '%s/net_baseline_%d.pth' % (nets_path, real_epoch))
+            torch.save(net.state_dict(), '%s/net_baseline_%d.pth' % (nets_path, real_epoch))
 
     print('Training Done:)')
 

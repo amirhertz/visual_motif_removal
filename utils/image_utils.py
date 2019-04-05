@@ -59,7 +59,7 @@ def resize_to_max(image, max_size):
     return np.array(image)
 
 
-def distort_wm(image, max_size, scale=False, crop=False, rotate=False, gray=False, blur=False):
+def distort_vm(image, max_size, scale=False, crop=False, rotate=False, gray=False, blur=False):
     if type(image) is str:
         image = Image.open(image)
     if gray:
@@ -137,7 +137,7 @@ def get_color_field(color, size):
     return color_field
 
 
-def get_text_watermark(text, color=(255, 255, 255, 255), font=FONT, border=0):
+def get_text_motif(text, color=(255, 255, 255, 255), font=FONT, border=0):
     if border != 0:
         border_size = random.randint(0, border)
         border_color = random.randint(100, 240)

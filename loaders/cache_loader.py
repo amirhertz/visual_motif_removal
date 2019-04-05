@@ -15,8 +15,7 @@ class CacheLoader(Dataset):
         self.extension = ['png' for _ in self.roots]
         self.sizes = self.cal_sizes()
         self.size = sum(self.sizes)
-        print('dataset size: ' + str(self.size))
-        self.pkl_mode = False
+        print('%s dataset size: %d' %( 'train' if train else 'test', self.size))
 
     @staticmethod
     def init_root(images_root, train):
@@ -39,30 +38,24 @@ class CacheLoader(Dataset):
                         self.extension[root_id] = 'jpg'
                     if (file_extension == '.png' or file_extension == '.jpg') and 'bounding' not in file_name and 'opc' not in file_name:
                         size += 1
-                    elif file_extension == '.pkl':
-                        size += 4
-                        self.pkl_mode = True
             sizes.append(size // 4)
         return sizes
 
     def __getitem__(self, index):
-        if self.pkl_mode:
-            return
-        else:
-            main_path, root_id = self.get_path(index)
-            or_image = self.load_image('%s_real_image.%s' % (main_path, self.extension[root_id]))
-            sy_image = self.load_image('%s_synthesized.%s' % (main_path, self.extension[root_id]))
-            binary_mask = self.load_image('%s_real_mask.%s' % (main_path, self.extension[root_id]), True)
-            watermark_rgb = self.load_image('%s_real_watermark.%s' % (main_path, self.extension[root_id]))
-            if self.patch_size:
-                sy_image, or_image, binary_mask, watermark_rgb = \
-                    self.crop_images(sy_image, or_image, binary_mask, watermark_rgb)
-            watermark_area = np.sum(binary_mask)
-            if watermark_area == 0:
-                watermark_area += 1
-            watermark_area = watermark_area.astype(np.float32)
-            return (torch.from_numpy(sy_image), torch.from_numpy(or_image), torch.from_numpy(binary_mask),
-                    torch.from_numpy(watermark_rgb),watermark_area)
+        main_path, root_id = self.get_path(index)
+        or_image = self.load_image('%s_real_image.%s' % (main_path, self.extension[root_id]))
+        sy_image = self.load_image('%s_synthesized.%s' % (main_path, self.extension[root_id]))
+        binary_mask = self.load_image('%s_real_mask.%s' % (main_path, self.extension[root_id]), True)
+        motif_rgb = self.load_image('%s_real_motif.%s' % (main_path, self.extension[root_id]))
+        if self.patch_size:
+            sy_image, or_image, binary_mask, motif_rgb = \
+                self.crop_images(sy_image, or_image, binary_mask, motif_rgb)
+        motif_area = np.sum(binary_mask)
+        if motif_area == 0:
+            motif_area += 1
+        motif_area = motif_area.astype(np.float32)
+        return (torch.from_numpy(sy_image), torch.from_numpy(or_image), torch.from_numpy(binary_mask),
+                torch.from_numpy(motif_rgb),motif_area)
 
     def get_path(self, index):
         root_id = 0

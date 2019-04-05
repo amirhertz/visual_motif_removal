@@ -4,7 +4,7 @@ class TrainOptions:
     def __init__(self):
         # self.image_domain = None
         # self.vm_tag = None
-        # self.images_root = None
+        self.images_root = None
         self.vm_root = None
         # self.image_and_vm_suffix = None
         self.vm_size = None

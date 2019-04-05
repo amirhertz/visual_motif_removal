@@ -104,14 +104,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# data
-student6
-data/*
-_cache_*
+# images
+*.jpg
 *.png
-
-!data/text
-old/
 
 # nets
 checkpoints/
