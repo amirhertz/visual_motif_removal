@@ -7,8 +7,8 @@ import numpy as np
 
 # dataset configurations
 dataset_tag = 'demo_text_vm_ds'
-images_root = '/mnt/data/amir/water/data/input_data/coco/all'
-cache_root = '/mnt/data/amir/water/cache/%s' % dataset_tag
+images_root = 'path to images'
+cache_root = 'path  to data dir/%s' % dataset_tag
 vm_root = '../data/text/word2.txt'
 image_size = 512
 vm_size = (50, 150)
@@ -20,7 +20,7 @@ weight = (0.2, 0.8)
 use_rgb = False
 perturbate = False
 opacity_var = 0.
-font = '/mnt/data/amir/Fonts'
+font = 'path to fonts dir'
 text_border = 3
 blur = True
 

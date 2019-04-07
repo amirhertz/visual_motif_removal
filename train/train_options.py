@@ -2,11 +2,8 @@
 class TrainOptions:
 
     def __init__(self):
-        # self.image_domain = None
-        # self.vm_tag = None
         self.images_root = None
         self.vm_root = None
-        # self.image_and_vm_suffix = None
         self.vm_size = None
         self.image_size = None
         self.patch_size = None
@@ -26,10 +23,6 @@ class TrainOptions:
         self.batch_size = None
         self.shared_depth = 0
         self.num_blocks = None
-        self.residual = None
-        self.transfer_data = None
-        self.concat = None
         self.use_vm_decoder = False
         self.text_border = False
-        self.additive = False
         self.blur = False

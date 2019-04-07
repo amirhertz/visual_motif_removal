@@ -3,11 +3,11 @@ from torch import nn
 
 # paths
 root_path = '..'
-train_tag = 'vm_demo_text_remover'
+train_tag = 'demo_emojis'
 
 
 # datasets paths
-cache_root = ['/mnt/data/amir/water/cache/demo_text_vm_ds']
+cache_root = ['data folder a', 'data folder b', '...']
 
 # dataset configurations
 patch_size = 128
@@ -18,22 +18,18 @@ nets_path = '%s/checkpoints/%s' % (root_path, train_tag)
 images_path = '%s/images' % nets_path
 
 num_blocks = (3, 3, 3, 3, 3)
-residual = True
-transfer_data = True
-concat = True
+shared_depth = 2
+use_vm_decoder = True
+
 
 # train configurations
 gamma1 = 2   # L1 image
 gamma2 = 1   # L1 visual motif
-epochs = 100
+epochs = 200
 batch_size = 32
 print_frequency = 100
 save_frequency = 10
 device = torch.device('cuda:0')
-
-# upgrading options
-shared_depth = 2
-use_vm_decoder = True
 
 
 def l1_relative(reconstructed, real, batch, area):

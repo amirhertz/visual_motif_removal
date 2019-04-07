@@ -18,8 +18,8 @@ def init_folders(*folders):
 def load_globals(nets_path, globals_dict, override=True):
     save_set = {
                 'vm_tag', 'images_root', 'vm_root', 'vm_size', 'image_size', 'patch_size', 'perturbate', 'opacity_var',
-                'use_rgb', 'weight', 'shared_depth', 'num_blocks', 'residual', 'batch_size', 'transfer_data', 'concat',
-                'use_vm_decoder', 'rotate_vm', 'scale_vm', 'crop_vm', 'batch_vm', 'font', 'noise', 'text_border', 'blur'
+                'use_rgb', 'weight', 'shared_depth', 'num_blocks', 'batch_size', 'use_vm_decoder', 'rotate_vm',
+                'scale_vm', 'crop_vm', 'batch_vm', 'font', 'text_border', 'blur'
                 }
     to_save = False
     params_file = '%s/train_params.pkl' % nets_path
@@ -59,12 +59,8 @@ def init_loaders(opt, cache_root=''):
 
 
 def init_nets(opt, net_path, device, tag=''):
-
-
-    out_channels_mask = 1
-    net_baseline = UnetBaselineD(shared_depth=opt.shared_depth, use_vm_decoder=opt.use_vm_decoder, concat=opt.concat,
-                                 blocks=opt.num_blocks, out_channels_mask=out_channels_mask, residual=opt.residual,
-                                 transfer_data=opt.transfer_data)
+    net_baseline = UnetBaselineD(shared_depth=opt.shared_depth, use_vm_decoder=opt.use_vm_decoder,
+                                 blocks=opt.num_blocks)
     if tag != '':
         tag = '_' + str(tag)
     cur_path = '%s/net_baseline%s.pth' % (net_path, tag)

@@ -5,8 +5,8 @@ from utils.image_utils import NEWLINE_REPLACEMENT_STRING, SPACE_REPLACEMENT_STRI
 MAX_LENGTH = 8
 UNWANTED_SIGNS = {'\n', ',', '.'}
 
-input_file = '../data/text/georgian_raw.txt'
-output_file = '../data/text/georgian.txt'
+input_file = 'raw text file'
+output_file = ''
 
 
 def fix_word(word):

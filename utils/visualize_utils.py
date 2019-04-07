@@ -1,6 +1,5 @@
 import torch
 import os.path
-from utils.image_utils import crop_image
 from utils.train_utils import load_globals, init_folders, init_nets
 from loaders.motif_dataset import MotifDS
 from PIL import Image
@@ -12,9 +11,9 @@ root_path = '..'
 train_tag = 'vm_demo_text_remover'
 load_tag = ''
 
-device = torch.device('cuda:2')
+device = torch.device('cuda:0')
 net_path = '%s/checkpoints/%s' % (root_path, train_tag)
-resources_root = '/home/amir/temp_bridge/data/test_images/trialswm'
+resources_root = 'test images folder'
 target_root = '%s/data/tmp' % root_path
 
 
@@ -82,7 +81,7 @@ def save_numpy_image(images, suffix, _target_root, _resources_root, prefix='', s
 def run_net(opt, _device, _net_path, _source, _target, _train_tag, _tag=''):
     net = init_nets(opt, _net_path, _device, _tag).eval()
     synthesized_paths = collect_synthesized(_source)
-    image_suffixes = ['reconstructed_image', 'reconstructed_mask', 'reconstructed_motif']
+    image_suffixes = ['reconstructed_image', 'reconstructed_motif']
     for path in synthesized_paths:
         prefix, _ = os.path.splitext(os.path.split(path)[-1])
         prefix = prefix.split('_')[0]
@@ -96,12 +95,11 @@ def run_net(opt, _device, _net_path, _source, _target, _train_tag, _tag=''):
             reconstructed_raw_motif = results[2]
             reconstructed_motif = (reconstructed_raw_motif - 1) * reconstructed_mask + 1
         reconstructed_image = reconstructed_mask * results[0] + (1 - reconstructed_mask) * sy_np
-        for idx, image in enumerate([reconstructed_image, reconstructed_mask, reconstructed_motif]):
+        for idx, image in enumerate([reconstructed_image, reconstructed_motif]):
             if image is not None and idx < len(image_suffixes):
                 save_numpy_image(image, '%s_%s' % (image_suffixes[idx], _train_tag), _target, _source,
                                  prefix=prefix)
     print('done')
-
 
 
 if __name__ == '__main__':
