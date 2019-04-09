@@ -1,5 +1,6 @@
 ### Visual Motif Removal
-Source code for the paper Blind Visual Motif Removal from a Single Image.
+Source code for the <a href="https://arxiv.org/abs/1904.02756" target="_blank">paper</a> Blind Visual Motif Removal from a Single Image.
+
 
 <p align="center" style= "cursor: text;">
 <a href="###" style= "cursor: text;"><img style= "cursor: text;" src="http://www.pxcm.org/motif/arch_diagram.png"></a>
