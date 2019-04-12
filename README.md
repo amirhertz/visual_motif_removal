@@ -9,10 +9,12 @@ Source code for the <a href="https://arxiv.org/abs/1904.02756" target="_blank">p
 **Prerequisites**
 * <a href="https://pytorch.org/" target="_blank">Pytorch</a> ≥ 0.4
 * Coco pythonApi: <a href="https://github.com/cocodataset/cocoapi" target="_blank">for python 2.7</a> or <a href="https://github.com/philferriere/cocoapi" target="_blank">for python 3</a> (optional for images datasets).
-<br>
-A demo script will be available soon.
 
+
+A pre-trained semi-transparent emojis removal model is available by running the script:  *demo / run_demo.py*.
+ 
 #### Training
+
 Start a training session, by run the file *train / train_main.py*.<br>
 Different training configurations are placed at the top.
 
