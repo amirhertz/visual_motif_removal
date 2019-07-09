@@ -248,6 +248,11 @@ class ImageLoader:
 
     def __load_image(self, index):
         image = Image.open(self.__paths[index])
+        
+        # Make sure the image is RGB, because some files are loaded as CMYK
+        if image.mode == 'CMYK':
+            image = image.convert('RGB')
+        
         return image, 0
 
     @staticmethod
